@@ -11,5 +11,7 @@ kernel = [-2, -1,   0,    0,   0;
       
 im = imread('P1_1/Lines.png');
 
+im;
+
 newIm = imfilter(im, kernel);
 imshow(newIm);
