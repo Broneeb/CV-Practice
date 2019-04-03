@@ -1,13 +1,14 @@
 //Global variables
 PImage im;
 PImage depth;
-int crudeness = 5;
+int crudeness = 2;
 float parallaxSpeed = 0.1; //set this between 1 and 0. the closer to 1 the faster the parallax
+float cameraDepth = 0;
 
 PVector []worldPoints;
 
 //Primitive setup
-int primitiveRadius = 3;
+int primitiveRadius = 2;
 boolean redraw = true;
 
 color getColorAt(PImage image, int x, int y){
@@ -16,8 +17,7 @@ color getColorAt(PImage image, int x, int y){
 
 float colorToDepth(PImage _depth, int x, int y){
   color c = getColorAt(_depth, x, y);
-  //return (pow(brightness(c)/254, 5));
-  return (brightness(c));
+  return (brightness(c) + cameraDepth);
 }
 
 void setPositionsAt(PVector p, int x, int y){
@@ -28,12 +28,12 @@ PVector pixelToWorldPoint(int x, int y){
   return worldPoints[(y*im.width) + x];
 }
 
-void setupWorldPoints(int offset){
+void setupWorldPoints(int offsetx, int offsety){
   worldPoints = new PVector[im.height * im.width];
   
   for (int x = 0; x < im.width; x++){
     for (int y = 0; y < im.height; y++){
-      worldPoints[(y*im.width) + x] = new PVector(x - (width/2) + offset, y - (height/2) + offset);
+      worldPoints[(y*im.width) + x] = new PVector(x - (width/2) + offsetx, y - (height/2) + offsety, 0);
     }
   }
 }
@@ -52,7 +52,7 @@ void readImages(){
   im.loadPixels();
   depth.loadPixels();
   
-  setupWorldPoints(0);
+  setupWorldPoints(0, 100);
 }
 
 void drawPointCloud(){ //Pass it the image, depth map, offset
@@ -67,29 +67,32 @@ void drawPointCloud(){ //Pass it the image, depth map, offset
   
   color c;
   PVector pos;
-  float z;
+  //float z;
   
   //Loop over image, create ellipses with required position
-  for (int y = 0; y < im.height; y += crudeness){
-    for (int x = 0; x < im.width; x += crudeness){
+  for (int y = im.height/4; y < 3*im.height/4; y += crudeness){
+    for (int x = im.width/4; x < 3*im.width/4; x += crudeness){
       //set color
       c = getColorAt(im, x, y);
-      stroke(c);
+      //stroke(c);
+      noStroke();
       fill(c);
       
       //here we set the depth of this particular vertex/primitive
       pos = pixelToWorldPoint(x, y);
-      z = colorToDepth(depth, x, y); //currently just returning brightness of the current pixel in the depth map
+      //z = colorToDepth(depth, x, y); //currently just returning brightness of the current pixel in the depth map
       
-      //update pos based on offset and initial depth. Offset should be between -2 and 2 for example with multiplicative factor of the depth, update positions in the positions array 
-      pos.x += offsetx * z * parallaxSpeed;
-      pos.y += offsety * z * parallaxSpeed;
+      //update pos based on offset and initial depth. Offset should be between -2 and 2 for example with multiplicative factor of the depth, update positions in the positions array
+      pos.z = brightness(depth.pixels[(y*im.width) + x]) + cameraDepth;
+      pos.x += offsetx * pos.z * parallaxSpeed;
+      pos.y += offsety * pos.z * parallaxSpeed;
+      
       setPositionsAt(pos, x, y);
         
       //draw vertex
-      translate(0, 0, z);
-      ellipse(pos.x, pos.y, primitiveRadius, primitiveRadius);
-      translate(0, 0, -z);
+      translate(0, 0, pos.z);
+      rect(pos.x, pos.y, primitiveRadius, primitiveRadius);
+      translate(0, 0, -pos.z);
     }
   }
 }
@@ -98,8 +101,23 @@ void mouseMoved(){
    redraw = true;
 }
 
+void keyPressed(){
+  if (keyCode == DOWN){
+    cameraDepth -= 100;  
+  } else if (keyCode == UP){
+    cameraDepth += 100;
+  }
+  
+}
+
 void draw(){
+    
+  //camera(width/2,height/2 - 1000, cameraDepth, // eyeX, eyeY, eyeZ
+  //       width/2, width/2, 0, // centerX, centerY, centerZ
+  //       0.0, 1.0, 0.0); // upX, upY, upZ
+  
    if(redraw){
+     lights();
     //noLoop();
     //return;
     background(0);
