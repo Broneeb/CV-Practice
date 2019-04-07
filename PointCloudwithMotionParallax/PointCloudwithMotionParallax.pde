@@ -8,7 +8,7 @@ float cameraDepth = 0;
 PVector []worldPoints;
 
 //Primitive setup
-int primitiveRadius = 2;
+int primitiveRadius = 3;
 boolean redraw = true;
 
 color getColorAt(PImage image, int x, int y){
@@ -42,13 +42,17 @@ void setup(){
   
   size(1300, 600, P3D);
   //colorMode(HSB);
-  background(60);
+  //background(0);
   readImages();
 }
 
 void readImages(){
+  //im = loadImage("i3.jpeg");
+  //depth = loadImage("d3.jpeg");
+  
   im = loadImage("i1.png");
   depth = loadImage("d1.jpg");
+  
   im.loadPixels();
   depth.loadPixels();
   
@@ -70,8 +74,8 @@ void drawPointCloud(){ //Pass it the image, depth map, offset
   //float z;
   
   //Loop over image, create ellipses with required position
-  for (int y = im.height/4; y < 3*im.height/4; y += crudeness){
-    for (int x = im.width/4; x < 3*im.width/4; x += crudeness){
+  for (int y = im.height/4; y < (3*im.height /4); y += crudeness){
+    for (int x = im.width/4; x < (3*im.width /4); x += crudeness){
       //set color
       c = getColorAt(im, x, y);
       //stroke(c);
@@ -103,7 +107,7 @@ void mouseMoved(){
 
 void keyPressed(){
   if (keyCode == DOWN){
-    cameraDepth -= 100;  
+    cameraDepth -= 100;
   } else if (keyCode == UP){
     cameraDepth += 100;
   }
@@ -117,7 +121,7 @@ void draw(){
   //       0.0, 1.0, 0.0); // upX, upY, upZ
   
    if(redraw){
-     lights();
+     //lights();
     //noLoop();
     //return;
     background(0);
