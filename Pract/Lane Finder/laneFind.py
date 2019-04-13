@@ -45,8 +45,49 @@ def processFrame(frame, mask):
 
     return output
 
+def sortHoughLines(lines):
+    rightLeaningRho = 0
+    rightLeaningTheta = 0
+    leftLeaningRho = 0
+    leftLeaningTheta = 0
+
+    rlCount = 0
+    llCount = 0
+
+    for line in lines:
+        rho = line[0][0]
+        theta = line[0][1]
+
+        if (theta < 1.5):
+            rightLeaningRho += rho
+            rightLeaningTheta += theta
+            rlCount+=1
+        else:
+            leftLeaningRho += rho
+            leftLeaningTheta += theta
+            llCount+=1
+
+    rightLeaningRho = rightLeaningRho/rlCount
+    rightLeaningTheta = rightLeaningTheta/rlCount
+    leftLeaningRho = leftLeaningRho/llCount
+    leftLeaningTheta = leftLeaningTheta/llCount
+
+    return rightLeaningRho, rightLeaningTheta, leftLeaningRho, leftLeaningTheta
+
+
+def showLine(p_frame, rho, theta):
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a*rho
+    y0 = b*rho
+    x1 = int(x0 + 1000*(-b))
+    y1 = int(y0 + 1000*(a))
+    x2 = int(x0 - 1000*(-b))
+    y2 = int(y0 - 1000*(a))
+    cv.line(p_frame, (x1, y1), (x2, y2), (100,0,0), 5)
+
 def showVideo(video, mask):
-    for i in range(0, 200):
+    for i in range(0, 2):
         ret, frame = video.read()
         
         gray = cv.cvtColor(frame, cv.COLOR_RGB2GRAY)
@@ -54,20 +95,16 @@ def showVideo(video, mask):
         p_frame = processFrame(gray, mask)
 
         lines = cv.HoughLines(p_frame, 1, np.pi/180, 100)
-        for line in lines:
-            rho = line[0][0]
-            theta = line[0][1]
-            a = np.cos(theta)
-            b = np.sin(theta)
-            x0 = a*rho
-            y0 = b*rho
-            x1 = int(x0 + 1000*(-b))
-            y1 = int(y0 + 1000*(a))
-            x2 = int(x0 - 1000*(-b))
-            y2 = int(y0 - 1000*(a))
-            cv.line(p_frame, (x1, y1), (x2, y2), (200,0,0), 10)
+        print("frame:  "+ str(i))
+        print (lines)
 
-        
+        # Should sort the given lines based on opposing gradients and then find the most hit block to retain
+        rrho, rtheta, lrho, ltheta = sortHoughLines(lines)
+
+        showLine(p_frame, rrho, rtheta)
+        showLine(p_frame, lrho, ltheta)
+
+        cv.waitKey(0)
 
         cv.imshow('frame', p_frame)
 
